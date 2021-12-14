@@ -8,6 +8,8 @@ class GameScene: SKScene {
     private var floor: SKSpriteNode!
     private let doubleTapGesture = UITapGestureRecognizer()
     
+    private var didJump: Bool = false
+    
     override func didMove(to view: SKView) {
         
         createBackground()
@@ -22,14 +24,18 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
             let touchLocation = touch.location(in: self)
-            let movePoint = CGPoint(x: touchLocation.x, y: player.position.y)
-            if touchLocation.x < player.position.x {
-                player.texture = SKTexture(imageNamed: "mirroredPlayer")
-            } else {
-                player.texture = SKTexture(imageNamed: "player")
+            if !didJump  {
+                let movePoint = CGPoint(x: touchLocation.x, y: player.position.y)
+                if touchLocation.x < player.position.x {
+                    player.texture = SKTexture(imageNamed: "mirroredPlayer")
+                } else {
+                    player.texture = SKTexture(imageNamed: "player")
+                }
+                let distance = distanceCalculation(a: player.position, b: touchLocation)
+                let time = TimeInterval(distance / 300.0)
+                let playerMoveAction = SKAction.move(to: movePoint, duration: time)
+                player.run(playerMoveAction, withKey: "playerMoveAction")
             }
-            let playerMoveAction = SKAction.move(to: movePoint, duration: 2)
-            player.run(playerMoveAction, withKey: "playerMoveAction")
         }
     }
     
@@ -39,10 +45,22 @@ class GameScene: SKScene {
         }
     }
     
+    override func update(_ currentTime: TimeInterval) {
+        checkIfCanJump()
+    }
+    
     @objc func playerJump() {
-        let moveTo = player.position.y + 100
-        let jumpAction =  SKAction.moveTo(y: moveTo, duration: 1)
-        player.run(jumpAction)
+        if !didJump {
+            let jumpImpulse = CGVector(dx: 0, dy: 80)
+            player.physicsBody?.applyImpulse(jumpImpulse)
+            didJump = true
+        }
+    }
+    
+    func checkIfCanJump() {
+        if player.action(forKey: "playerMoveAction") == nil && didJump {
+            didJump = false
+        }
     }
     
     //  MARK: создавал невидимый пол, на который приземлялись после прыжка под гравитацией, но галимо работало
@@ -61,6 +79,10 @@ class GameScene: SKScene {
 //        floor.physicsBody?.allowsRotation = false
 //        addChild(floor)
 //    }
+    
+    private func distanceCalculation(a: CGPoint, b: CGPoint) -> CGFloat {
+        return sqrt((b.x - a.x)*(b.x - a.x))
+    }
     
     
     private func createPlayer() {
