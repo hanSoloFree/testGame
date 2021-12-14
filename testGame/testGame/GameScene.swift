@@ -8,9 +8,10 @@ class GameScene: SKScene {
     private var floor: SKSpriteNode!
     private let doubleTapGesture = UITapGestureRecognizer()
     
-    private var didJump: Bool = false
+    private var isInTheAir: Bool = false
     
     override func didMove(to view: SKView) {
+        
         
         createBackground()
         createPlayer()
@@ -22,9 +23,14 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        print(player.position.y)
+        print(player.size.height)
+        print(floor.position.y)
+        
         if let touch = touches.first {
             let touchLocation = touch.location(in: self)
-            if !didJump  {
+            if !isInTheAir  {
                 let movePoint = CGPoint(x: touchLocation.x, y: player.position.y)
                 if touchLocation.x < player.position.x {
                     player.texture = SKTexture(imageNamed: "mirroredPlayer")
@@ -46,39 +52,44 @@ class GameScene: SKScene {
     }
     
     override func update(_ currentTime: TimeInterval) {
-        checkIfCanJump()
+        isInTheAir = checkIfIsInTheAir()
     }
     
     @objc func playerJump() {
-        if !didJump {
+        if !isInTheAir {
             let jumpImpulse = CGVector(dx: 0, dy: 80)
             player.physicsBody?.applyImpulse(jumpImpulse)
-            didJump = true
+            isInTheAir = true
         }
     }
     
-    func checkIfCanJump() {
-        if player.action(forKey: "playerMoveAction") == nil && didJump {
-            didJump = false
+    func checkIfIsInTheAir() -> Bool {
+        let groundTopPosition = sqrt(floor.position.y * floor.position.y)
+        let playerFootPosiion = sqrt(player.position.y * player.position.y) + groundTopPosition
+        let difference = playerFootPosiion - player.size.height
+        if difference > 0 {
+            return true
+        } else  {
+            return false
         }
     }
     
     //  MARK: создавал невидимый пол, на который приземлялись после прыжка под гравитацией, но галимо работало
     
     
-//    private func createFloor() {
-//        let floorWidth = self.frame.width
-//        floor = SKSpriteNode(texture: nil, size: CGSize(width: floorWidth, height: 1))
-//        let y = player.position.y - player.size.height - 1
-//        floor.position = CGPoint(x: 0, y: y)
-//        floor.zPosition = 1
-//        floor.physicsBody = SKPhysicsBody(rectangleOf: floor.size)
-//        floor.physicsBody?.affectedByGravity = false
-//        floor.physicsBody?.isDynamic = false
-//        floor.physicsBody?.pinned = false
-//        floor.physicsBody?.allowsRotation = false
-//        addChild(floor)
-//    }
+    //    private func createFloor() {
+    //        let floorWidth = self.frame.width
+    //        floor = SKSpriteNode(texture: nil, size: CGSize(width: floorWidth, height: 1))
+    //        let y = player.position.y - player.size.height - 1
+    //        floor.position = CGPoint(x: 0, y: y)
+    //        floor.zPosition = 1
+    //        floor.physicsBody = SKPhysicsBody(rectangleOf: floor.size)
+    //        floor.physicsBody?.affectedByGravity = false
+    //        floor.physicsBody?.isDynamic = false
+    //        floor.physicsBody?.pinned = false
+    //        floor.physicsBody?.allowsRotation = false
+    //        addChild(floor)
+    //    }
     
     private func distanceCalculation(a: CGPoint, b: CGPoint) -> CGFloat {
         return sqrt((b.x - a.x)*(b.x - a.x))
@@ -87,7 +98,7 @@ class GameScene: SKScene {
     
     private func createPlayer() {
         player = SKSpriteNode(imageNamed: "player")
-        player.position = CGPoint(x: 0, y: 100)
+        player.position = CGPoint(x: 0, y: 250)
         player.zPosition = 10
         let playerHeight = self.frame.height / 2.5
         player.size = CGSize(width: playerHeight, height: playerHeight)
