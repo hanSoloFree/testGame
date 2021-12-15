@@ -5,19 +5,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private var background: SKSpriteNode!
     private var player: SKSpriteNode!
+    private var monster: SKSpriteNode!
     private var floor: SKSpriteNode!
     private let doubleTapGesture = UITapGestureRecognizer()
     
     private var isInTheAir: Bool = false
+    private var isForced: Bool = false
     
     private let playerCategory: UInt32 = 0x1 << 0
     private let groundCategory: UInt32 = 0x1 << 1
+    private let monsterCategory: UInt32 = 0x1 << 2
     
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
+        physicsWorld.gravity.dy = -5
         
         createBackground()
         createPlayer()
+        
         
         doubleTapGesture.addTarget(self, action: #selector(playerJump))
         doubleTapGesture.numberOfTapsRequired = 2
@@ -26,20 +31,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
+        if monster == nil {
+            createMonster()
+        }
+        
         if let touch = touches.first {
             let touchLocation = touch.location(in: self)
-            if !isInTheAir  {
-                let movePoint = CGPoint(x: touchLocation.x, y: player.position.y)
+//            if !isInTheAir  {
                 if touchLocation.x < player.position.x {
                     player.texture = SKTexture(imageNamed: "mirroredPlayer")
                 } else {
                     player.texture = SKTexture(imageNamed: "player")
                 }
-                let distance = distanceCalculation(a: player.position, b: touchLocation)
-                let time = TimeInterval(distance / 300.0)
-                let playerMoveAction = SKAction.move(to: movePoint, duration: time)
-                player.run(playerMoveAction, withKey: "playerMoveAction")
-            }
+            
+            let distance = distanceCalculation(a: player.position, b: touchLocation)
+            let time = TimeInterval(distance / 150.0)
+            
+            let playerMoveAction = SKAction.moveTo(x: touchLocation.x, duration: time)
+            
+            player.run(playerMoveAction, withKey: "playerMoveAction")
+//            }
         }
     }
     
@@ -49,53 +60,68 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func didBegin(_ contact: SKPhysicsContact) {
-        let collision = contact.bodyA.collisionBitMask | contact.bodyB.collisionBitMask
-        if collision == playerCategory | groundCategory {
-            isInTheAir = false
+    override func update(_ currentTime: TimeInterval) {
+        if isForced {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1.5) {
+                self.isForced = false
+                self.moveMonster()
+            }
         }
     }
     
-//    override func update(_ currentTime: TimeInterval) {
-//        isInTheAir = checkIfIsInTheAir()
-//    }
+    func didBegin(_ contact: SKPhysicsContact) {
+        let bodyACategory = contact.bodyA.categoryBitMask
+        let bodyBCategory = contact.bodyB.categoryBitMask
+        
+        if (bodyACategory == playerCategory && bodyBCategory == groundCategory) || (bodyACategory == groundCategory && bodyBCategory == playerCategory) {
+            self.isInTheAir = false
+        }
+        
+        if (bodyACategory == playerCategory && bodyBCategory == monsterCategory) || (bodyACategory == monsterCategory && bodyBCategory == playerCategory) {
+            let redColorAciton = SKAction.colorize(with: .red,
+                                                   colorBlendFactor: 1,
+                                                   duration: 0.5)
+            let whiteColorAction = SKAction.colorize(with: .white,
+                                                     colorBlendFactor: 0,
+                                                     duration: 0.5)
+            let colorActionSequence  = SKAction.sequence([redColorAciton, whiteColorAction])
+            let repeatColorAction =  SKAction.repeat(colorActionSequence, count: 4)
+            
+            
+            if monster.hasActions() {
+                monster.removeAction(forKey: "repeateAction")
+                player.run(repeatColorAction)
+            }
+            
+            if !isForced {
+                isForced = true
+                if monster.position.x < player.position.x {
+                    let impulse = CGVector(dx: 10, dy: 10)
+                    player.physicsBody?.applyImpulse(impulse)
+                }
+                if monster.position.x > player.position.x {
+                    let impulse = CGVector(dx: -10, dy: 10)
+                    player.physicsBody?.applyImpulse(impulse)
+                }
+            }
+        }
+    }
+
     
     @objc func playerJump() {
         if !isInTheAir {
-            let jumpImpulse = CGVector(dx: 0, dy: 80)
+            let jumpImpulse = CGVector(dx: 0, dy: 30)
             player.physicsBody?.applyImpulse(jumpImpulse)
             isInTheAir = true
         }
     }
     
     
-    
-//    func checkIfIsInTheAir() -> Bool {
-//        let groundTopPosition = sqrt(floor.position.y * floor.position.y)
-//        let playerFootPosiion = sqrt(player.position.y * player.position.y) + groundTopPosition
-//        let difference = playerFootPosiion - player.size.height
-//
-//
-//        if difference > 1 {
-//            return true
-//        } else  {
-//            return false
-//        }
-//    }
-
-    
     private func distanceCalculation(a: CGPoint, b: CGPoint) -> CGFloat {
         return sqrt((b.x - a.x)*(b.x - a.x))
     }
     
-    
-    private func createPlayer() {
-        player = SKSpriteNode(imageNamed: "player")
-        player.position = CGPoint(x: 0, y: 250)
-        player.zPosition = 10
-        let playerHeight = self.frame.height / 2.5
-        player.size = CGSize(width: playerHeight, height: playerHeight)
-        
+    private func createPlayerPhysicsBody() {
         // MARK: свойства физического тела для персонажа
         
         player.physicsBody = SKPhysicsBody(texture: player.texture!, size: player.size)
@@ -105,10 +131,58 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         player.physicsBody?.isDynamic = true
         
         player.physicsBody?.categoryBitMask = playerCategory
-        player.physicsBody?.collisionBitMask = groundCategory
-        player.physicsBody?.contactTestBitMask = groundCategory
-
+        //        player.physicsBody?.collisionBitMask = groundCategory /*|   monsterCategory */
+        player.physicsBody?.contactTestBitMask = groundCategory |  monsterCategory
+    }
+    
+    private func createPlayer() {
+        player = SKSpriteNode(imageNamed: "player")
+        player.position = CGPoint(x: 0, y: 100)
+        player.zPosition = 10
+        let playerHeight = self.frame.height / 4
+        player.size = CGSize(width: playerHeight, height: playerHeight)
+        
+        createPlayerPhysicsBody()
+        
         addChild(player)
+    }
+    
+    private func createMonster() {
+        monster = SKSpriteNode(imageNamed: "monster")
+        let monsterHeight = self.frame.height / 5
+        monster.size = CGSize(width: monsterHeight, height: monsterHeight)
+        let monsterPositionX = -(self.frame.width / 2) + monsterHeight
+        let monsterPosiitonY = player.position.y - (player.size.height - monster.size.height) / 2
+        monster.position = CGPoint(x: monsterPositionX, y: monsterPosiitonY)
+        monster.zPosition = 10
+        
+        monster.physicsBody = SKPhysicsBody(texture: monster.texture!, size: monster.size)
+        monster.physicsBody?.affectedByGravity = true
+        monster.physicsBody?.allowsRotation  = false
+        monster.physicsBody?.pinned = false
+        monster.physicsBody?.isDynamic = false
+        
+        monster.physicsBody?.categoryBitMask = monsterCategory
+        //        monster.physicsBody?.collisionBitMask = playerCategory | groundCategory
+        monster.physicsBody?.contactTestBitMask = playerCategory
+        
+        addChild(monster)
+        moveMonster()
+    }
+    
+    
+    private func moveMonster() {
+        let moveTo = (self.frame.width / 2) - (monster.size.width / 2)
+        
+        let moveRightAction = SKAction.moveTo(x: moveTo, duration: 5)
+        let moveRightTexture = SKAction.setTexture(SKTexture(imageNamed: "monster"))
+        
+        let moveLeftAction = SKAction.moveTo(x: -moveTo, duration: 5)
+        let moveLeftTexture = SKAction.setTexture(SKTexture(imageNamed: "mirroredMonster"))
+        
+        let actionSequence = SKAction.sequence([moveRightTexture,moveRightAction, moveLeftTexture, moveLeftAction])
+        let repeateAction = SKAction.repeatForever(actionSequence)
+        monster.run(repeateAction, withKey: "repeateAction")
     }
     
     private func createBackground() {
@@ -133,8 +207,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         floor.physicsBody?.affectedByGravity = false
         
         floor.physicsBody?.categoryBitMask = groundCategory
-        floor.physicsBody?.collisionBitMask = playerCategory
-        floor.physicsBody?.contactTestBitMask = playerCategory
+        //        floor.physicsBody?.collisionBitMask = playerCategory /*| monsterCategory */
+        //        floor.physicsBody?.contactTestBitMask = playerCategory
         
         addChild(floor)
     }
