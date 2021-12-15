@@ -1,7 +1,7 @@
 import SpriteKit
 import GameplayKit
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private var background: SKSpriteNode!
     private var player: SKSpriteNode!
@@ -10,12 +10,14 @@ class GameScene: SKScene {
     
     private var isInTheAir: Bool = false
     
+    private let playerCategory: UInt32 = 0x1 << 0
+    private let groundCategory: UInt32 = 0x1 << 1
+    
     override func didMove(to view: SKView) {
-        
+        physicsWorld.contactDelegate = self
         
         createBackground()
         createPlayer()
-        
         
         doubleTapGesture.addTarget(self, action: #selector(playerJump))
         doubleTapGesture.numberOfTapsRequired = 2
@@ -23,10 +25,6 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        
-        print(player.position.y)
-        print(player.size.height)
-        print(floor.position.y)
         
         if let touch = touches.first {
             let touchLocation = touch.location(in: self)
@@ -51,9 +49,16 @@ class GameScene: SKScene {
         }
     }
     
-    override func update(_ currentTime: TimeInterval) {
-        isInTheAir = checkIfIsInTheAir()
+    func didBegin(_ contact: SKPhysicsContact) {
+        let collision = contact.bodyA.collisionBitMask | contact.bodyB.collisionBitMask
+        if collision == playerCategory | groundCategory {
+            isInTheAir = false
+        }
     }
+    
+//    override func update(_ currentTime: TimeInterval) {
+//        isInTheAir = checkIfIsInTheAir()
+//    }
     
     @objc func playerJump() {
         if !isInTheAir {
@@ -63,33 +68,21 @@ class GameScene: SKScene {
         }
     }
     
-    func checkIfIsInTheAir() -> Bool {
-        let groundTopPosition = sqrt(floor.position.y * floor.position.y)
-        let playerFootPosiion = sqrt(player.position.y * player.position.y) + groundTopPosition
-        let difference = playerFootPosiion - player.size.height
-        if difference > 0 {
-            return true
-        } else  {
-            return false
-        }
-    }
-    
-    //  MARK: создавал невидимый пол, на который приземлялись после прыжка под гравитацией, но галимо работало
     
     
-    //    private func createFloor() {
-    //        let floorWidth = self.frame.width
-    //        floor = SKSpriteNode(texture: nil, size: CGSize(width: floorWidth, height: 1))
-    //        let y = player.position.y - player.size.height - 1
-    //        floor.position = CGPoint(x: 0, y: y)
-    //        floor.zPosition = 1
-    //        floor.physicsBody = SKPhysicsBody(rectangleOf: floor.size)
-    //        floor.physicsBody?.affectedByGravity = false
-    //        floor.physicsBody?.isDynamic = false
-    //        floor.physicsBody?.pinned = false
-    //        floor.physicsBody?.allowsRotation = false
-    //        addChild(floor)
-    //    }
+//    func checkIfIsInTheAir() -> Bool {
+//        let groundTopPosition = sqrt(floor.position.y * floor.position.y)
+//        let playerFootPosiion = sqrt(player.position.y * player.position.y) + groundTopPosition
+//        let difference = playerFootPosiion - player.size.height
+//
+//
+//        if difference > 1 {
+//            return true
+//        } else  {
+//            return false
+//        }
+//    }
+
     
     private func distanceCalculation(a: CGPoint, b: CGPoint) -> CGFloat {
         return sqrt((b.x - a.x)*(b.x - a.x))
@@ -111,6 +104,10 @@ class GameScene: SKScene {
         player.physicsBody?.pinned = false
         player.physicsBody?.isDynamic = true
         
+        player.physicsBody?.categoryBitMask = playerCategory
+        player.physicsBody?.collisionBitMask = groundCategory
+        player.physicsBody?.contactTestBitMask = groundCategory
+
         addChild(player)
     }
     
@@ -134,6 +131,10 @@ class GameScene: SKScene {
         floor.physicsBody?.pinned = false
         floor.physicsBody?.allowsRotation = false
         floor.physicsBody?.affectedByGravity = false
+        
+        floor.physicsBody?.categoryBitMask = groundCategory
+        floor.physicsBody?.collisionBitMask = playerCategory
+        floor.physicsBody?.contactTestBitMask = playerCategory
         
         addChild(floor)
     }
