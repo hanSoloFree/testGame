@@ -1,0 +1,3 @@
+protocol AlertDelegate {
+    func gameStarted()
+}

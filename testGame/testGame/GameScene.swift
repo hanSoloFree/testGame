@@ -1,11 +1,12 @@
 import SpriteKit
 import GameplayKit
 
-class GameScene: SKScene, SKPhysicsContactDelegate {
+class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
     
+    var gameOverDelegate: GameOverDelegate?
     private var healthNodes = [SKSpriteNode]()
     private var heroHealth = 3
-
+    
     private var background: SKSpriteNode!
     private var player: SKSpriteNode!
     private var monster: SKSpriteNode!
@@ -20,14 +21,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let monsterCategory: UInt32 = 0x1 << 2
     
     override func didMove(to view: SKView) {
+        
         physicsWorld.contactDelegate = self
         physicsWorld.gravity.dy = -8
-
         
         createBackground()
         createPlayer()
         createHealthPoints()
-        
+//        createCoin()
         
         doubleTapGesture.addTarget(self, action: #selector(playerJump))
         doubleTapGesture.numberOfTapsRequired = 2
@@ -36,18 +37,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         
-        if monster == nil {
-            createMonster()
-        }
-        
         if let touch = touches.first {
             let touchLocation = touch.location(in: self)
-//            if !isInTheAir  {
-                if touchLocation.x < player.position.x {
-                    player.texture = SKTexture(imageNamed: "mirroredPlayer")
-                } else {
-                    player.texture = SKTexture(imageNamed: "player")
-                }
+            if touchLocation.x < player.position.x {
+                player.texture = SKTexture(imageNamed: "mirroredPlayer")
+            } else {
+                player.texture = SKTexture(imageNamed: "player")
+            }
             
             let distance = distanceCalculation(a: player.position, b: touchLocation)
             let time = TimeInterval(distance / 150.0)
@@ -55,7 +51,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let playerMoveAction = SKAction.moveTo(x: touchLocation.x, duration: time)
             
             player.run(playerMoveAction, withKey: "playerMoveAction")
-//            }
         }
     }
     
@@ -72,6 +67,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 self.moveMonster()
             }
         }
+        
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
@@ -93,12 +89,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let repeatColorAction =  SKAction.repeat(colorActionSequence, count: 4)
             
             if healthNodes.isEmpty {
-                isPaused = true
+                if !isPaused {
+                    gameOverDelegate?.pushGameOverViewController()
+                    isPaused = true
+                }
             }
-
+            
             
             if monster.hasActions() {
-                monster.removeAction(forKey: "repeateAction")
+                monster.removeAction(forKey: "repeatAction")
                 player.run(repeatColorAction)
                 let lostHp = healthNodes.removeLast()
                 lostHp.isHidden = true
@@ -107,23 +106,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if !isForced {
                 isForced = true
                 if monster.position.x < player.position.x {
-                    let impulse = CGVector(dx: 10, dy: 10)
+                    let impulse = CGVector(dx: 15, dy: 15)
                     player.physicsBody?.applyImpulse(impulse)
                 }
                 if monster.position.x > player.position.x {
-                    let impulse = CGVector(dx: -10, dy: 10)
+                    let impulse = CGVector(dx: -15, dy: 15)
                     player.physicsBody?.applyImpulse(impulse)
                 }
             }
         }
     }
-
+    
     
     @objc func playerJump() {
         if !isInTheAir {
             let jumpImpulse = CGVector(dx: 0, dy: 35)
             player.physicsBody?.applyImpulse(jumpImpulse)
             isInTheAir = true
+        }
+    }
+    func gameStarted() {
+        if monster == nil {
+            createMonster()
         }
     }
     
@@ -149,7 +153,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func createPlayer() {
         player = SKSpriteNode(imageNamed: "player")
         player.position = CGPoint(x: 0, y: 100)
-        player.zPosition = 10
+        player.zPosition = 15
         let playerHeight = self.frame.height / 4
         player.size = CGSize(width: playerHeight, height: playerHeight)
         
@@ -164,6 +168,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         monster.size = CGSize(width: monsterHeight, height: monsterHeight)
         let monsterPositionX = -(self.frame.width / 2) + monsterHeight
         let monsterPosiitonY = player.position.y - (player.size.height - monster.size.height) / 2
+        let y = floor.position.y + (monsterHeight / 2) + (floor.size.height / 2)
+        print(monsterPosiitonY)
+        print(y)
         monster.position = CGPoint(x: monsterPositionX, y: monsterPosiitonY)
         monster.zPosition = 10
         
@@ -191,9 +198,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let moveLeftAction = SKAction.moveTo(x: -moveTo, duration: 5)
         let moveLeftTexture = SKAction.setTexture(SKTexture(imageNamed: "mirroredMonster"))
         
-        let actionSequence = SKAction.sequence([moveRightTexture,moveRightAction, moveLeftTexture, moveLeftAction])
-        let repeateAction = SKAction.repeatForever(actionSequence)
-        monster.run(repeateAction, withKey: "repeateAction")
+        if monster.position.x < 0 {
+            let moveRightSequence = SKAction.sequence([moveRightTexture,moveRightAction, moveLeftTexture, moveLeftAction])
+            let repeatAction = SKAction.repeatForever(moveRightSequence)
+            monster.run(repeatAction, withKey: "repeatAction")
+        }
+        if monster.position.x >= 0 {
+            let moveLeftSequence = SKAction.sequence([moveLeftTexture,moveLeftAction, moveRightTexture, moveRightAction])
+            let repeatAction = SKAction.repeatForever(moveLeftSequence)
+            monster.run(repeatAction, withKey: "repeatAction")
+        }
     }
     
     private func createBackground() {
@@ -238,4 +252,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             addChild(hp)
         }
     }
+// MARK: -  COIN CREATION 
+//    private func createCoin() {
+//        let coin = SKSpriteNode(imageNamed: "coin")
+//        coin.size = CGSize(width: 50, height: 50)
+//        let randomX = CGFloat.random(in: -(self.frame.width / 2 + 60)...(self.frame.width / 2 - 60) )
+//        coin.position = CGPoint(x: randomX, y: floor.position.y + (floor.size.height / 2))
+//        coin.zPosition = 10
+//        addChild(coin)
+//
+//    }
 }
+
+

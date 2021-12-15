@@ -1,0 +1,3 @@
+protocol GameOverDelegate  {
+    func pushGameOverViewController()
+}
