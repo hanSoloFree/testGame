@@ -3,6 +3,9 @@ import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
+    private var healthNodes = [SKSpriteNode]()
+    private var heroHealth = 3
+
     private var background: SKSpriteNode!
     private var player: SKSpriteNode!
     private var monster: SKSpriteNode!
@@ -18,10 +21,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func didMove(to view: SKView) {
         physicsWorld.contactDelegate = self
-        physicsWorld.gravity.dy = -5
+        physicsWorld.gravity.dy = -8
+
         
         createBackground()
         createPlayer()
+        createHealthPoints()
         
         
         doubleTapGesture.addTarget(self, action: #selector(playerJump))
@@ -87,10 +92,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let colorActionSequence  = SKAction.sequence([redColorAciton, whiteColorAction])
             let repeatColorAction =  SKAction.repeat(colorActionSequence, count: 4)
             
+            if healthNodes.isEmpty {
+                isPaused = true
+            }
+
             
             if monster.hasActions() {
                 monster.removeAction(forKey: "repeateAction")
                 player.run(repeatColorAction)
+                let lostHp = healthNodes.removeLast()
+                lostHp.isHidden = true
             }
             
             if !isForced {
@@ -110,7 +121,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     @objc func playerJump() {
         if !isInTheAir {
-            let jumpImpulse = CGVector(dx: 0, dy: 30)
+            let jumpImpulse = CGVector(dx: 0, dy: 35)
             player.physicsBody?.applyImpulse(jumpImpulse)
             isInTheAir = true
         }
@@ -211,5 +222,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         //        floor.physicsBody?.contactTestBitMask = playerCategory
         
         addChild(floor)
+    }
+    
+    private func createHealthPoints() {
+        var width = 30
+        for _ in 1...heroHealth {
+            let hp = SKSpriteNode(imageNamed: "hp")
+            hp.size = CGSize(width: 30, height: 30)
+            hp.zPosition = 15
+            let x = -(self.frame.width / 2) + (CGFloat(width) * 1.5)
+            let y = (self.frame.height / 2) - (hp.size.height)
+            hp.position = CGPoint(x: x , y: y)
+            width +=  Int(hp.size.width)
+            healthNodes.append(hp)
+            addChild(hp)
+        }
     }
 }
