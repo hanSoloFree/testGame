@@ -7,6 +7,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
     private var healthNodes = [SKSpriteNode]()
     private var heroHealth = 3
     
+    private var coinsCollected = 0 {
+        didSet {
+            coinsCount.text = String(describing: coinsCollected)
+        }
+    }
+    private var coinsCount: SKLabelNode!
+    
     private var background: SKSpriteNode!
     private var player: SKSpriteNode!
     private var monster: SKSpriteNode!
@@ -15,10 +22,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
     
     private var isInTheAir: Bool = false
     private var isForced: Bool = false
+    private var coinGenerated: Bool = false
+    private var gameIsStarted: Bool = false
     
     private let playerCategory: UInt32 = 0x1 << 0
     private let groundCategory: UInt32 = 0x1 << 1
     private let monsterCategory: UInt32 = 0x1 << 2
+    private let coinCategory: UInt32 = 0x1 << 3
     
     override func didMove(to view: SKView) {
         
@@ -28,7 +38,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
         createBackground()
         createPlayer()
         createHealthPoints()
-//        createCoin()
+        createCoinsCount()
+        
         
         doubleTapGesture.addTarget(self, action: #selector(playerJump))
         doubleTapGesture.numberOfTapsRequired = 2
@@ -46,7 +57,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
             }
             
             let distance = distanceCalculation(a: player.position, b: touchLocation)
-            let time = TimeInterval(distance / 150.0)
+            let speed: CGFloat = 200.0
+            let time = TimeInterval(distance / speed)
             
             let playerMoveAction = SKAction.moveTo(x: touchLocation.x, duration: time)
             
@@ -67,7 +79,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
                 self.moveMonster()
             }
         }
-        
+        if gameIsStarted {
+            if !coinGenerated {
+                self.coinGenerated = true
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 7) {
+                    self.createCoin()
+                    self.coinGenerated = false
+                }
+            }
+        }
+        if player.position.y < floor.position.y {
+            isPaused = true
+            gameOverDelegate?.coinsCount = self.coinsCollected
+            gameOverDelegate?.pushGameOverViewController()
+        }
+                
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
@@ -90,6 +116,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
             
             if healthNodes.isEmpty {
                 if !isPaused {
+                    gameOverDelegate?.coinsCount = self.coinsCollected
                     gameOverDelegate?.pushGameOverViewController()
                     isPaused = true
                 }
@@ -115,12 +142,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
                 }
             }
         }
+        
+        if (bodyACategory == playerCategory && bodyBCategory == coinCategory) || (bodyACategory == coinCategory && bodyBCategory == playerCategory) {
+            if bodyACategory == coinCategory {
+                if contact.bodyA.node != nil {
+                    contact.bodyA.node?.removeFromParent()
+                    coinsCollected += 1
+                }
+            }
+            if bodyBCategory == coinCategory {
+                if contact.bodyB.node != nil {
+                    contact.bodyB.node?.removeFromParent()
+                    coinsCollected += 1
+                }
+            }
+        }
     }
     
     
     @objc func playerJump() {
         if !isInTheAir {
-            let jumpImpulse = CGVector(dx: 0, dy: 35)
+            let jumpImpulse = CGVector(dx: 0, dy: 30)
             player.physicsBody?.applyImpulse(jumpImpulse)
             isInTheAir = true
         }
@@ -128,6 +170,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
     func gameStarted() {
         if monster == nil {
             createMonster()
+            gameIsStarted = true
         }
     }
     
@@ -168,9 +211,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
         monster.size = CGSize(width: monsterHeight, height: monsterHeight)
         let monsterPositionX = -(self.frame.width / 2) + monsterHeight
         let monsterPosiitonY = player.position.y - (player.size.height - monster.size.height) / 2
-        let y = floor.position.y + (monsterHeight / 2) + (floor.size.height / 2)
-        print(monsterPosiitonY)
-        print(y)
         monster.position = CGPoint(x: monsterPositionX, y: monsterPosiitonY)
         monster.zPosition = 10
         
@@ -253,15 +293,47 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
         }
     }
 // MARK: -  COIN CREATION 
-//    private func createCoin() {
-//        let coin = SKSpriteNode(imageNamed: "coin")
-//        coin.size = CGSize(width: 50, height: 50)
-//        let randomX = CGFloat.random(in: -(self.frame.width / 2 + 60)...(self.frame.width / 2 - 60) )
-//        coin.position = CGPoint(x: randomX, y: floor.position.y + (floor.size.height / 2))
-//        coin.zPosition = 10
-//        addChild(coin)
-//
-//    }
+    private func createCoin() {
+        let coin = SKSpriteNode(imageNamed: "coin")
+        coin.size = CGSize(width: 50, height: 50)
+        let randomX = CGFloat.random(in: -(self.frame.width / 2 + 60)...(self.frame.width / 2 - 60) )
+        let coinY = monster.position.y - (monster.size.height / 2) + (coin.size.height / 2)
+        coin.position = CGPoint(x: randomX, y: coinY)
+        coin.zPosition = 10
+        
+        coin.physicsBody = SKPhysicsBody(texture: coin.texture!, size: coin.size)
+
+        coin.physicsBody?.isDynamic = false
+        coin.physicsBody?.pinned = false
+        coin.physicsBody?.allowsRotation = false
+        coin.physicsBody?.affectedByGravity = false
+        
+        coin.physicsBody?.categoryBitMask = coinCategory
+        coin.physicsBody?.contactTestBitMask = playerCategory
+        
+        
+        addChild(coin)
+    }
+    
+    private func createCoinsCount() {
+        let coin = SKSpriteNode(imageNamed: "coin")
+        coin.size = CGSize(width: 30, height: 30)
+        let coinY = (self.frame.height / 2) - (coin.size.height)
+        let coinX = (self.frame.width / 2) - coin.size.width * 1.5
+        coin.position = CGPoint(x: coinX, y: coinY)
+        coin.zPosition = 15
+        addChild(coin)
+        
+        
+        coinsCount = SKLabelNode(text: String(describing: coinsCollected))
+        coinsCount.fontName = "Arial Rounded MT Bold"
+        let coinsCountX = (self.frame.width / 2) - coin.size.width * 2.8
+        let coinsCountY = coinY - (coin.size.height / 2.3)
+        coinsCount.position = CGPoint(x: coinsCountX, y: coinsCountY)
+        coinsCount.zPosition = 15
+        addChild(coinsCount)
+        
+    }
 }
 
 

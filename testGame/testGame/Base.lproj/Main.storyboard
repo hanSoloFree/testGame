@@ -35,14 +35,8 @@
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="2Va-GJ-38c">
                                 <rect key="frame" x="0.0" y="0.0" width="896" height="414"/>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="GAME OVER" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="olr-wk-yS4">
-                                <rect key="frame" x="144" y="48" width="608" height="93"/>
-                                <fontDescription key="fontDescription" name="ArialRoundedMTBold" family="Arial Rounded MT Bold" pointSize="80"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1Ky-HA-ozF">
-                                <rect key="frame" x="338" y="172" width="220" height="70"/>
+                                <rect key="frame" x="354.5" y="284" width="187" height="49"/>
                                 <color key="backgroundColor" systemColor="systemGreenColor"/>
                                 <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <state key="normal" title="Button"/>
@@ -53,25 +47,60 @@
                                     <action selector="tryAgainButttonPressed:" destination="f5G-6I-MMT" eventType="touchUpInside" id="Xa0-hf-9AM"/>
                                 </connections>
                             </button>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ECa-9D-PUl">
+                                <rect key="frame" x="174" y="32" width="548" height="116.5"/>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="NwE-fT-DRO">
+                                <rect key="frame" x="632" y="166.5" width="60" height="60"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="NwE-fT-DRO" secondAttribute="height" multiplier="1:1" id="ON2-BJ-sVK"/>
+                                    <constraint firstAttribute="height" constant="60" id="yro-vQ-Zd5"/>
+                                </constraints>
+                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ua6-i9-gsA">
+                                <rect key="frame" x="296" y="164.5" width="304" height="64.5"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You collected coins:" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="G0g-qi-ubd">
+                                        <rect key="frame" x="16" y="16" width="272" height="32.5"/>
+                                        <fontDescription key="fontDescription" name="ArialRoundedMTBold" family="Arial Rounded MT Bold" pointSize="28"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.40000000000000002" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="G0g-qi-ubd" secondAttribute="bottom" constant="16" id="0AX-vG-6C2"/>
+                                    <constraint firstItem="G0g-qi-ubd" firstAttribute="leading" secondItem="Ua6-i9-gsA" secondAttribute="leading" constant="16" id="JDl-iC-ipe"/>
+                                    <constraint firstItem="G0g-qi-ubd" firstAttribute="top" secondItem="Ua6-i9-gsA" secondAttribute="top" constant="16" id="nEw-dw-Pfz"/>
+                                    <constraint firstAttribute="trailing" secondItem="G0g-qi-ubd" secondAttribute="trailing" constant="16" id="pDB-bV-65j"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="cQN-G2-Dhf"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstAttribute="bottom" secondItem="2Va-GJ-38c" secondAttribute="bottom" id="2HA-sN-zQv"/>
-                            <constraint firstItem="1Ky-HA-ozF" firstAttribute="width" secondItem="2Va-GJ-38c" secondAttribute="width" multiplier="0.245536" id="3n2-U0-bhX"/>
                             <constraint firstAttribute="trailing" secondItem="2Va-GJ-38c" secondAttribute="trailing" id="7cH-kZ-ITm"/>
+                            <constraint firstItem="NwE-fT-DRO" firstAttribute="leading" secondItem="Ua6-i9-gsA" secondAttribute="trailing" constant="32" id="9hu-i6-NwQ"/>
                             <constraint firstItem="2Va-GJ-38c" firstAttribute="leading" secondItem="Gq1-2p-EyV" secondAttribute="leading" id="AiF-UA-Mu0"/>
-                            <constraint firstItem="1Ky-HA-ozF" firstAttribute="height" secondItem="2Va-GJ-38c" secondAttribute="height" multiplier="0.169082" id="EX2-4n-EGv"/>
-                            <constraint firstItem="1Ky-HA-ozF" firstAttribute="centerY" secondItem="Gq1-2p-EyV" secondAttribute="centerY" id="IzP-4K-7x8"/>
-                            <constraint firstItem="1Ky-HA-ozF" firstAttribute="centerX" secondItem="Gq1-2p-EyV" secondAttribute="centerX" id="SBO-b1-p0b"/>
-                            <constraint firstItem="olr-wk-yS4" firstAttribute="top" secondItem="cQN-G2-Dhf" secondAttribute="top" constant="48" id="bUc-cb-F0S"/>
-                            <constraint firstItem="olr-wk-yS4" firstAttribute="leading" secondItem="cQN-G2-Dhf" secondAttribute="leading" constant="100" id="fDl-QU-A51"/>
-                            <constraint firstItem="cQN-G2-Dhf" firstAttribute="trailing" secondItem="olr-wk-yS4" secondAttribute="trailing" constant="100" id="k5A-qy-vqS"/>
+                            <constraint firstItem="cQN-G2-Dhf" firstAttribute="bottom" secondItem="1Ky-HA-ozF" secondAttribute="bottom" constant="60" id="UHq-cz-qTY"/>
+                            <constraint firstItem="cQN-G2-Dhf" firstAttribute="trailing" secondItem="ECa-9D-PUl" secondAttribute="trailing" constant="130" id="cuM-KG-TRo"/>
+                            <constraint firstItem="ECa-9D-PUl" firstAttribute="leading" secondItem="cQN-G2-Dhf" secondAttribute="leading" constant="130" id="cv1-Ru-hN8"/>
+                            <constraint firstItem="Ua6-i9-gsA" firstAttribute="centerX" secondItem="cQN-G2-Dhf" secondAttribute="centerX" id="g8L-ca-XU9"/>
                             <constraint firstItem="2Va-GJ-38c" firstAttribute="top" secondItem="cQN-G2-Dhf" secondAttribute="top" id="lPM-OD-43o"/>
+                            <constraint firstItem="1Ky-HA-ozF" firstAttribute="centerX" secondItem="Gq1-2p-EyV" secondAttribute="centerX" id="mja-Ga-1lH"/>
+                            <constraint firstItem="ECa-9D-PUl" firstAttribute="top" secondItem="cQN-G2-Dhf" secondAttribute="top" constant="32" id="nS7-UO-XCB"/>
+                            <constraint firstItem="G0g-qi-ubd" firstAttribute="top" secondItem="ECa-9D-PUl" secondAttribute="bottom" constant="32" id="niY-kq-VLm"/>
+                            <constraint firstItem="Ua6-i9-gsA" firstAttribute="centerY" secondItem="cQN-G2-Dhf" secondAttribute="centerY" id="onL-Pi-c98"/>
+                            <constraint firstItem="NwE-fT-DRO" firstAttribute="centerY" secondItem="cQN-G2-Dhf" secondAttribute="centerY" id="qcA-4z-u9z"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="backgroundImageView" destination="2Va-GJ-38c" id="diU-7A-07f"/>
+                        <outlet property="coinImageView" destination="NwE-fT-DRO" id="ODp-to-meE"/>
+                        <outlet property="coinsCollectedLabel" destination="G0g-qi-ubd" id="DqJ-sr-Z3K"/>
+                        <outlet property="coinsCollectedLabelBackground" destination="Ua6-i9-gsA" id="wP3-89-p5J"/>
+                        <outlet property="gameOverLabel" destination="ECa-9D-PUl" id="fBV-AI-AmS"/>
                         <outlet property="tryAgainButton" destination="1Ky-HA-ozF" id="6MJ-Mi-n7m"/>
                     </connections>
                 </viewController>

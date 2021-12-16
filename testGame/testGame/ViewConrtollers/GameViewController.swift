@@ -4,6 +4,8 @@ import GameplayKit
 
 class GameViewController: UIViewController, GameOverDelegate {
     
+    var coinsCount = 0
+    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -36,7 +38,8 @@ class GameViewController: UIViewController, GameOverDelegate {
     
     func pushGameOverViewController() {
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let gameOverViewConttroller = storyboard.instantiateViewController(withIdentifier: "GameOverViewController")
-        self.navigationController?.pushViewController(gameOverViewConttroller, animated: false)
+        guard let gameOverViewController = storyboard.instantiateViewController(withIdentifier: "GameOverViewController") as? GameOverViewController else { return }
+        gameOverViewController.coinsCount = self.coinsCount
+        self.navigationController?.pushViewController(gameOverViewController, animated: false)
     }
 }
