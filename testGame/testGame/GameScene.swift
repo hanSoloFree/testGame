@@ -4,6 +4,7 @@ import GameplayKit
 class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
     
     var gameOverDelegate: GameOverDelegate?
+        
     private var healthNodes = [SKSpriteNode]()
     private var heroHealth = 3
     
@@ -292,6 +293,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AlertDelegate {
             addChild(hp)
         }
     }
+    private func addMusic() {
+        let musicAction = SKAction.playSoundFileNamed("music", waitForCompletion: false)
+        run(musicAction)
+    }
+    
+    
+    
 // MARK: -  COIN CREATION 
     private func createCoin() {
         let coin = SKSpriteNode(imageNamed: "coin")

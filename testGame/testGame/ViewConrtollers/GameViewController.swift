@@ -13,6 +13,13 @@ class GameViewController: UIViewController, GameOverDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        let musicIsOn: Bool = UserDefaults.standard.bool(forKey: "musicStatus")
+        if musicIsOn {
+            playSound()
+        } else {
+            player?.stop()
+        }
+        
         if let view = self.view as! SKView? {
             guard let scene = GameScene(fileNamed: "GameScene") else { return }
             scene.scaleMode = .resizeFill
